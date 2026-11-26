@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Look up pipe dimensions by nominal size and schedule, or flange dimensions by nominal size and class.">
+<meta name="author" content="Niraj">
+<title>Boreline Dimensions</title>
+<link rel="stylesheet" href="style.css?v=4">
+<script src="data.js" defer></script>
+<script src="lookup.js?v=4" defer></script>
+</head>
+<body>
+<header class="bar"><div class="frame brand"><span class="mark" aria-hidden="true"></span><span>Boreline <span class="subbrand">Dimensions</span></span>
+  <div class="unit-switch" role="group" aria-label="Display units">
+    <button type="button" data-unit="us" aria-label="in · Inches and pounds" aria-pressed="false">in</button>
+    <button type="button" data-unit="metric" aria-label="mm · Millimetres and kilograms" aria-pressed="true">mm</button>
+  </div>
+</div></header>
+<main class="frame">
+  <section class="intro">
+    <div>
+      <h1>Pipe &amp; flange<br>dimensions<span>.</span></h1>
+      <p>Find dimensions by nominal size, pipe schedule or flange pressure class.</p>
+    </div>
+    <div class="geometry" aria-hidden="true"><i></i><i></i><i></i><b>Ø</b></div>
+  </section>
+  <nav aria-label="Dimension catalogues"><button id="pipe" aria-pressed="true">Pipes</button><button id="flange" aria-pressed="false">Flanges</button></nav>
+  <div class="workspace">
+    <aside class="panel controls">
+      <h2>Lookup parameters</h2>
+      <label for="size">Nominal pipe size</label><select id="size"></select>
+      <label for="variant" id="variant-label">Schedule</label><select id="variant"></select>
+      <p id="help"></p>
+    </aside>
+    <section class="panel result" aria-labelledby="result-title" aria-live="polite">
+      <div class="result-head"><div><p id="category"></p><h2 id="result-title"></h2></div><span id="tag"></span></div>
+      <div id="metrics" class="metrics"></div>
+      <dl id="details"></dl>
+      <p id="note" class="note" hidden></p>
+    </section>
+  </div>
+  <noscript>Enable JavaScript to use the dimension lookup.</noscript>
+</main>
+<footer class="frame site-credit">Author: Niraj</footer>
+</body></html>
