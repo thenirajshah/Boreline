@@ -3,44 +3,90 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Look up pipe dimensions by nominal size and schedule, or flange dimensions by nominal size and class.">
+<meta name="description" content="Look up and compare engineering dimensions for pipes and flanges by nominal pipe size, schedule, and pressure class.">
 <meta name="author" content="Niraj">
+<meta name="theme-color" content="#151b24">
 <title>Boreline Dimensions</title>
-<link rel="stylesheet" href="style.css?v=4">
-<script src="data.js" defer></script>
-<script src="lookup.js?v=4" defer></script>
+<script>
+document.documentElement.classList.add('booting');
+try { document.documentElement.dataset.theme = localStorage.getItem('boreline-theme') || 'system'; } catch {}
+</script>
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/1lQAAAAASUVORK5CYII=">
+<link rel="stylesheet" href="./style.css?v=5">
+<script src="./data.js" defer></script>
+<script src="./engineering.js" defer></script>
+<script src="./drawing.js" defer></script>
+<script src="./lookup.js?v=5" defer></script>
 </head>
 <body>
-<header class="bar"><div class="frame brand"><span class="mark" aria-hidden="true"></span><span>Boreline <span class="subbrand">Dimensions</span></span>
-  <div class="unit-switch" role="group" aria-label="Display units">
-    <button type="button" data-unit="us" aria-label="in · Inches and pounds" aria-pressed="false">in</button>
-    <button type="button" data-unit="metric" aria-label="mm · Millimetres and kilograms" aria-pressed="true">mm</button>
-  </div>
-</div></header>
-<main class="frame">
-  <section class="intro">
-    <div>
-      <h1>Pipe &amp; flange<br>dimensions<span>.</span></h1>
-      <p>Find dimensions by nominal size, pipe schedule or flange pressure class.</p>
+<a class="skip" href="#main">Skip to workspace</a>
+<header class="header">
+  <button type="button" id="menu" class="icon-button" aria-controls="sidebar" aria-expanded="true" aria-label="Toggle navigation"><span class="icon menu" aria-hidden="true"></span></button>
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true"></span><span>Boreline <small>Dimensions</small></span></a>
+  <button type="button" id="command" class="command"><span class="icon search" aria-hidden="true"></span><span>Quick navigation</span><kbd>Ctrl / ⌘ K</kbd></button>
+</header>
+<div class="shell" id="shell">
+  <aside id="sidebar" class="sidebar">
+    <nav aria-label="Engineering catalogues">
+      <p class="nav-label">Catalogues</p>
+      <button type="button" data-category="pipe"><span class="icon pipe" aria-hidden="true"></span>Pipes</button>
+      <button type="button" data-category="flange"><span class="icon flange" aria-hidden="true"></span>Flanges</button>
+    </nav>
+    <nav aria-label="Workspace tools">
+      <p class="nav-label">Workspace</p>
+      <button type="button" data-view="compare"><span class="icon compare" aria-hidden="true"></span>Compare <span class="nav-count" id="compare-count" hidden></span></button>
+      <button type="button" data-view="favorites"><span class="icon star" aria-hidden="true">☆</span>Favorites</button>
+      <button type="button" data-view="recent"><span class="icon recent" aria-hidden="true"></span>Recently viewed</button>
+    </nav>
+    <div class="sidebar-footer"><label for="theme">Appearance</label><select id="theme"><option value="system">System default</option><option value="light">Light</option><option value="dark">Dark</option></select><small>Author: Niraj</small></div>
+  </aside>
+  <div id="navigation-scrim" class="navigation-scrim" aria-hidden="true" hidden></div>
+  <main id="main" tabindex="-1">
+    <div class="workspace">
+      <div class="workspace-bar">
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><span>Dimensions</span><span aria-hidden="true">/</span><span id="crumb" aria-current="page">Pipes</span></nav>
+        <div class="unit-switch" role="group" aria-label="Display units">
+          <button type="button" data-unit="metric" aria-label="Metric, millimetres and kilograms" aria-pressed="true">Metric</button>
+          <button type="button" data-unit="us" aria-label="US customary, inches and pounds" aria-pressed="false">US customary</button>
+        </div>
+      </div>
+      <section id="lookup" aria-labelledby="title">
+        <div class="page-title"><div><h1 id="title">Pipe dimensions</h1><p id="subtitle"></p></div>
+          <div class="actions"><button type="button" id="favorite" aria-pressed="false">Favorite</button><button type="button" id="share">Copy link</button></div>
+        </div>
+        <p id="url-notice" class="notice" hidden></p>
+        <section class="panel parameters" aria-labelledby="parameter-title">
+          <div class="panel-header"><h2 id="parameter-title">Lookup parameters</h2><button type="button" id="reset" class="quiet">Reset</button></div>
+          <div class="parameter-grid">
+            <div id="size-picker"></div><div id="variant-picker"></div>
+          </div>
+        </section>
+        <div class="results-grid">
+          <section class="panel drawing" aria-labelledby="drawing-title">
+            <div class="panel-header"><h2 id="drawing-title">Technical drawing</h2></div>
+            <div id="drawing-stage" class="drawing-stage"></div>
+          </section>
+          <section class="panel dimensions" aria-labelledby="result-title">
+            <div class="panel-header record-header"><div><p class="eyebrow">Dimension record</p><h2 id="result-title"></h2></div><span id="designation" class="tag"></span></div>
+            <div class="table-scroll"><table><caption class="sr-only">Selected record dimensions</caption><thead><tr><th scope="col">Symbol</th><th scope="col">Dimension</th><th scope="col" class="numeric">Value</th><th scope="col">Unit</th><th scope="col" class="print-hide"><span class="sr-only">Copy value</span></th></tr></thead><tbody id="dimensions"></tbody></table></div>
+            <div id="record-notes" class="record-notes"></div>
+            <div class="panel-footer actions"><button type="button" id="add-compare" class="primary">Add to comparison</button><button type="button" id="copy-record">Copy record</button><button type="button" id="download">Export CSV</button><button type="button" id="print">Print</button></div>
+          </section>
+        </div>
+      </section>
+      <section id="tools-view" aria-labelledby="tools-title" hidden>
+        <div class="page-title"><div><h1 id="tools-title"></h1><p id="tools-description"></p></div></div>
+        <div id="tools-content"></div>
+      </section>
+      <noscript><p class="notice">Enable JavaScript to use the dimension lookup.</p></noscript>
     </div>
-    <div class="geometry" aria-hidden="true"><i></i><i></i><i></i><b>Ø</b></div>
-  </section>
-  <nav aria-label="Dimension catalogues"><button id="pipe" aria-pressed="true">Pipes</button><button id="flange" aria-pressed="false">Flanges</button></nav>
-  <div class="workspace">
-    <aside class="panel controls">
-      <h2>Lookup parameters</h2>
-      <label for="size">Nominal pipe size</label><select id="size"></select>
-      <label for="variant" id="variant-label">Schedule</label><select id="variant"></select>
-      <p id="help"></p>
-    </aside>
-    <section class="panel result" aria-labelledby="result-title" aria-live="polite">
-      <div class="result-head"><div><p id="category"></p><h2 id="result-title"></h2></div><span id="tag"></span></div>
-      <div id="metrics" class="metrics"></div>
-      <dl id="details"></dl>
-      <p id="note" class="note" hidden></p>
-    </section>
-  </div>
-  <noscript>Enable JavaScript to use the dimension lookup.</noscript>
-</main>
-<footer class="frame site-credit">Author: Niraj</footer>
-</body></html>
+  </main>
+</div>
+<dialog id="palette" aria-labelledby="palette-title">
+  <div class="panel-header"><h2 id="palette-title">Quick navigation</h2><button type="button" data-close>Close</button></div>
+  <div class="palette-content" id="palette-picker"></div>
+</dialog>
+<p id="feedback" class="feedback" role="status"></p>
+<p id="selection-status" class="sr-only" role="status"></p>
+</body>
+</html>
